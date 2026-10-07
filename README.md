@@ -72,7 +72,7 @@ npm run build && npm start   # http://localhost:8787
 ### Тесты
 
 ```bash
-npm test          # 48 тестов, 6 файлов
+npm test          # 54 теста, 6 файлов
 npm run typecheck # tsc -b по всем трём пакетам
 ```
 
@@ -484,7 +484,7 @@ tests/version-pinning.test.ts     6   закрепление версии за �
 tests/ab-stability.test.ts        8   стабильность A/B-варианта
 tests/event-dedup.test.ts         7   дедупликация и изоляция ошибок в пачке
 tests/versioning-rollback.test.ts 8   публикация и откат версии
-tests/analytics.test.ts          10   расчёт показателей
+tests/analytics.test.ts          16   расчёт показателей и валидация числовых шагов
 tests/second-iteration.test.ts    9   сценарий второй итерации
 ```
 

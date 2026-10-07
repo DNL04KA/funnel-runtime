@@ -296,3 +296,106 @@ describe('расчёт аналитических показателей', () =>
     expect(untouched?.in_config).toBe(true);
   });
 });
+
+describe('валидация числовых шагов', () => {
+  let h: Harness;
+
+  beforeEach(async () => {
+    h = await startHarness({ configs: ['funnel.v2.json'] });
+  });
+  afterEach(async () => {
+    await h.close();
+  });
+
+  /** Доводит свежую сессию до шага с бюджетом. */
+  async function toBudget(): Promise<string> {
+    const boot = await createSession(h, { variant: 'A' });
+    const id = boot.session.session_id;
+    await answer(h, id, 'intro', null);
+    await answer(h, id, 'role', 'ops');
+    await answer(h, id, 'warehouses', 5);
+    await answer(h, id, 'volume', 'enterprise');
+    return id;
+  }
+
+  const submit = (id: string, step: string, value: unknown) =>
+    h.post<{ error?: string }>(`/api/session/${id}/answer`, { step_id: step, value });
+
+  it('принимает граничные значения диапазона', async () => {
+    for (const value of [300_000, 60_000_000]) {
+      const res = await submit(await toBudget(), 'budget', value);
+      expect(res.status, `бюджет ${value}`).toBe(200);
+    }
+  });
+
+  it('отклоняет значения за границами диапазона', async () => {
+    for (const [value, expected] of [
+      [299_999, 'Минимум'],
+      [60_000_001, 'Максимум'],
+      [0, 'Минимум'],
+      [-5_000_000, 'Минимум'],
+    ] as const) {
+      const res = await submit(await toBudget(), 'budget', value);
+      expect(res.status, `бюджет ${value}`).toBe(422);
+      expect(res.body.error).toContain(expected);
+    }
+  });
+
+  it('отклоняет дробные значения там, где шаг целочисленный', async () => {
+    // Половина склада и рубли с копейками в смете — бессмыслица для этих полей.
+    const budget = await submit(await toBudget(), 'budget', 4_500_000.75);
+    expect(budget.status).toBe(422);
+    expect(budget.body.error).toBe('Введите целое число');
+
+    const boot = await createSession(h, { variant: 'A' });
+    await answer(h, boot.session.session_id, 'intro', null);
+    await answer(h, boot.session.session_id, 'role', 'ops');
+    const warehouses = await submit(boot.session.session_id, 'warehouses', 7.5);
+    expect(warehouses.status).toBe(422);
+    expect(warehouses.body.error).toBe('Введите целое число');
+  });
+
+  it('отклоняет пустое и нечисловое', async () => {
+    for (const [value, expected] of [
+      [null, 'Введите значение'],
+      ['', 'Введите значение'],
+      ['пятьсот', 'Введите число'],
+    ] as const) {
+      const res = await submit(await toBudget(), 'budget', value);
+      expect(res.status, `значение ${JSON.stringify(value)}`).toBe(422);
+      expect(res.body.error).toBe(expected);
+    }
+  });
+
+  it('число строкой принимается и нормализуется', async () => {
+    const id = await toBudget();
+    const res = await submit(id, 'budget', '4500000');
+    expect(res.status).toBe(200);
+    const row = h.db.prepare('SELECT answers_json FROM sessions WHERE session_id = ?').get(id) as {
+      answers_json: string;
+    };
+    expect(JSON.parse(row.answers_json).budget).toBe('4500000');
+  });
+
+  it('в событие уходит бакет, а не точная сумма', async () => {
+    for (const [value, bucket] of [
+      [300_000, '300k-1.5M'],
+      [1_499_999, '300k-1.5M'],
+      [1_500_000, '1.5M-5M'],
+      [5_000_000, '5M-15M'],
+      [15_000_000, '15M+'],
+    ] as const) {
+      const id = await toBudget();
+      await answer(h, id, 'budget', value);
+      const row = h.db
+        .prepare(
+          `SELECT props_json FROM events
+            WHERE session_id = ? AND event_type = 'answer_submitted' AND step_id = 'budget'`,
+        )
+        .get(id) as { props_json: string };
+
+      expect(JSON.parse(row.props_json).answer.bucket, `сумма ${value}`).toBe(bucket);
+      expect(row.props_json, `сумма ${value} не должна попасть в событие`).not.toContain(String(value));
+    }
+  });
+});

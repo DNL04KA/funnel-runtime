@@ -37,7 +37,7 @@ await card(page, {
   sub: 'Конфигурируемые воронки, A/B-эксперименты, собственный приём событий, аналитика по уникальным сессиям и откат версий без потери данных.',
   html: `<div class="chips">
     <span>TypeScript</span><span>React + Vite</span><span>Node + Express</span>
-    <span>SQLite</span><span>48 тестов</span><span>один репозиторий</span>
+    <span>SQLite</span><span>54 теста</span><span>один репозиторий</span>
   </div>`,
   hold: 3400,
 });
@@ -285,11 +285,11 @@ await beat(page, 3000);
 await capOff(page);
 await card(page, {
   kicker: '09 — Проверки',
-  title: '48 тестов на настоящем приложении',
+  title: '54 теста на настоящем приложении',
   sub: 'Поднимают реальный сервер на SQLite :memory: и ходят в него по HTTP. Моков нет.',
   html: code(
     'npm test',
-    `<span class="ok">✓</span> tests/analytics.test.ts            <span class="c">(10 tests)</span>
+    `<span class="ok">✓</span> tests/analytics.test.ts            <span class="c">(16 tests)</span>
 <span class="ok">✓</span> tests/second-iteration.test.ts     <span class="c">( 9 tests)</span>
 <span class="ok">✓</span> tests/versioning-rollback.test.ts  <span class="c">( 8 tests)</span>
 <span class="ok">✓</span> tests/ab-stability.test.ts         <span class="c">( 8 tests)</span>
@@ -297,7 +297,7 @@ await card(page, {
 <span class="ok">✓</span> tests/version-pinning.test.ts      <span class="c">( 6 tests)</span>
 
  Test Files  <span class="ok">6 passed</span> (6)
-      Tests  <span class="ok">48 passed</span> (48)`,
+      Tests  <span class="ok">54 passed</span> (54)`,
   ),
   hold: 4300,
 });
@@ -313,7 +313,7 @@ await card(page, {
     <li>Воронка целиком из конфига, состояние переживает back и refresh</li>
     <li>Версии, закрепление за сессией и откат без потери аналитики</li>
     <li>Идемпотентный приём событий пачками, агрегаты по уникальным сессиям</li>
-    <li>Генератор синтетического трафика и 48 автотестов</li>
+    <li>Генератор синтетического трафика и 54 автотеста</li>
   </ul>`,
   hold: 4200,
 });

@@ -174,6 +174,14 @@ export function validateAnswer(step: FunnelStep, value: AnswerValue): Validation
       }
       const num = typeof value === 'number' ? value : Number(value);
       if (!Number.isFinite(num)) return { ok: false, error: 'Введите число' };
+      // Целочисленность выводится из stepSize: шаг в целых числах означает, что
+      // дробное значение бессмысленно для этого поля (половина склада, рубли с
+      // копейками в смете внедрения). Само кратство шагу не требуем — это
+      // подсказка для стрелок в поле ввода, а не ограничение на ответ.
+      const stepSize = s.stepSize ?? 1;
+      if (Number.isInteger(stepSize) && !Number.isInteger(num)) {
+        return { ok: false, error: 'Введите целое число' };
+      }
       if (s.min !== undefined && num < s.min) {
         return { ok: false, error: `Минимум ${formatNum(s.min)}${s.unit ? ' ' + s.unit : ''}` };
       }
