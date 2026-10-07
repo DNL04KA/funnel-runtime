@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import { z } from 'zod';
 import { resolveVariantConfig, validateConfig, type FunnelConfig } from '@funnel/shared';
+import { DEMO_MODE } from '../../env.js';
 import { handler, requireAdmin, type AppContext } from '../app.js';
 import {
   activateVersion,
@@ -44,6 +45,7 @@ export function registerAdminRoutes(app: Express, ctx: AppContext): void {
     handler((_req, res) => {
       res.json({
         funnel_id: ctx.funnelId,
+        demo_mode: DEMO_MODE,
         active_version: getActiveVersionNumber(db, ctx.funnelId),
         versions: listVersions(db, ctx.funnelId),
         audit: listAudit(db, ctx.funnelId),

@@ -1,6 +1,7 @@
 import type { FunnelConfig } from '@funnel/shared';
 import type { Db } from '../db/index.js';
-import { listConfigLibrary, publishVersion } from './versions.js';
+import { generateTraffic } from './traffic.js';
+import { activateVersion, getActiveVersionNumber, listConfigLibrary, listVersions, publishVersion } from './versions.js';
 
 export interface SeedResult {
   published: { file: string; version: number; activated: boolean }[];
@@ -48,4 +49,63 @@ export function seedVersionsIfEmpty(db: Db): SeedResult {
   const count = (db.prepare('SELECT COUNT(*) AS n FROM funnel_versions').get() as { n: number }).n;
   if (count > 0) return { published: [], skipped: true };
   return seedVersions(db);
+}
+
+/* ────────────────────────── демо-стенд ────────────────────────── */
+
+export interface DemoSeedOptions {
+  baseUrl: string;
+  funnelId: string;
+  sessions: number;
+  /** Сколько последних версий наполнить, чтобы сравнение версий не пустовало. */
+  versions?: number;
+  seed?: number;
+}
+
+/**
+ * Досевает синтетический трафик, если событий ещё нет.
+ *
+ * Нужно только для стенда на эфемерном диске (Render free и подобные): там
+ * файл базы исчезает при рестарте, и без этого проверяющий открыл бы дашборд
+ * с нулями. Идемпотентно: при непустой таблице событий сразу выходит, поэтому
+ * безопасно вызывать на каждом старте.
+ */
+export async function seedDemoTrafficIfEmpty(db: Db, opts: DemoSeedOptions): Promise<boolean> {
+  const existing = (db.prepare('SELECT COUNT(*) AS n FROM events').get() as { n: number }).n;
+  if (existing > 0) return false;
+
+  const original = getActiveVersionNumber(db, opts.funnelId);
+  const spread = listVersions(db, opts.funnelId)
+    .map((v) => v.version)
+    .sort((a, b) => a - b)
+    .slice(-Math.max(1, opts.versions ?? 2));
+
+  if (spread.length === 0) return false;
+
+  const now = Date.now();
+  const perVersion = Math.ceil(opts.sessions / spread.length);
+  let produced = 0;
+
+  for (const [i, version] of spread.entries()) {
+    if (getActiveVersionNumber(db, opts.funnelId) !== version) {
+      activateVersion(db, opts.funnelId, version, 'demo-seed', 'наполнение демо-стенда');
+    }
+    const target = Math.min(perVersion, opts.sessions - produced);
+    if (target <= 0) break;
+    await generateTraffic({
+      baseUrl: opts.baseUrl,
+      sessions: target,
+      seed: (opts.seed ?? 20261007) + i,
+      now,
+    });
+    produced += target;
+  }
+
+  // Активная версия возвращается на исходную: стенд должен встречать
+  // проверяющего в том же состоянии, что и локальный запуск.
+  if (original !== null && getActiveVersionNumber(db, opts.funnelId) !== original) {
+    activateVersion(db, opts.funnelId, original, 'demo-seed', 'восстановление активной версии');
+  }
+
+  return true;
 }

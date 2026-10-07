@@ -30,6 +30,20 @@ export const WEB_DIST = resolve(REPO_ROOT, 'web', 'dist');
 
 export const FUNNEL_ID = process.env.FUNNEL_ID ?? 'sorter-wms-fit';
 
+/**
+ * Демо-стенд. Если задано, сервер при старте на пустой базе досевает столько
+ * синтетических сессий — чтобы на хостинге с эфемерным диском дашборд никогда
+ * не встречал проверяющего нулями.
+ *
+ * Для обычного запуска значение не нужно: локально данные создаёт
+ * `npm run seed:traffic`, а на хостинге с постоянным диском они переживают
+ * рестарт сами.
+ */
+export const DEMO_SEED_SESSIONS = Number(process.env.DEMO_SEED_SESSIONS ?? 0);
+
+/** Стенд работает на эфемерном диске и пересоздаёт данные при рестарте. */
+export const DEMO_MODE = DEMO_SEED_SESSIONS > 0;
+
 export function ensureDataDir(dbPath = DB_PATH): void {
   if (dbPath === ':memory:') return;
   mkdirSync(dirname(dbPath), { recursive: true });

@@ -1,21 +1,41 @@
-# Render blueprint: one web service with a persistent disk for SQLite.
-#   render.com → New → Blueprint → point at this repository.
+# Render Blueprint.
+#
+# По умолчанию — бесплатный инстанс: карта не нужна, но диск на free-плане
+# недоступен, поэтому файловая система эфемерна. Чтобы дашборд не встречал
+# проверяющего нулями, сервер при старте на пустой базе сам публикует конфиги
+# и засевает синтетический трафик (DEMO_SEED_SESSIONS).
+#
+# Бесплатный инстанс засыпает после 15 минут простоя. Против этого — пинг из
+# .github/workflows/keepalive.yml раз в пять минут.
+#
+# ──────────────────────────────────────────────────────────────────────────
+# Вариант с постоянным диском (данные переживают перезапуск; нужен платный
+# инстанс и карта). Замените plan на starter, уберите DEMO_SEED_SESSIONS,
+# поставьте DB_PATH=/data/funnel.db и раскомментируйте блок disk:
+#
+#     plan: starter
+#     disk:
+#       name: funnel-data
+#       mountPath: /data
+#       sizeGB: 1
+# ──────────────────────────────────────────────────────────────────────────
+
 services:
   - type: web
     name: funnel-runtime
     runtime: docker
-    plan: starter          # a disk requires a paid instance type
+    plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
     envVars:
-      - key: PORT
-        value: "8787"
+      # PORT не задаём: Render подставляет свой, сервер его читает.
       - key: DB_PATH
-        value: /data/funnel.db
-      # Set a value here to require `x-admin-token` on /api/admin/*.
+        value: /tmp/funnel.db
+      # Сколько сессий досеять при старте на пустой базе. 0 — выключить.
+      - key: DEMO_SEED_SESSIONS
+        value: "120"
+      # Задайте значение, чтобы закрыть /api/admin/* заголовком x-admin-token.
+      # Для демо-стенда лучше оставить пустым: иначе проверяющий не сможет
+      # сам опубликовать версию и сделать откат.
       - key: ADMIN_TOKEN
         sync: false
-    disk:
-      name: funnel-data
-      mountPath: /data
-      sizeGB: 1

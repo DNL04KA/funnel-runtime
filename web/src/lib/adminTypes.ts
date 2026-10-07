@@ -75,6 +75,7 @@ export interface AnalyticsResponseShape {
     latest_event_at: string | null;
   };
   generated_at: string;
+  demo_mode?: boolean;
 }
 
 export interface LibraryEntry {
@@ -112,6 +113,7 @@ export interface RejectRowShape {
 
 export interface AdminOverview {
   funnel_id: string;
+  demo_mode?: boolean;
   active_version: number | null;
   versions: VersionSummary[];
   audit: VersionAuditEntry[];

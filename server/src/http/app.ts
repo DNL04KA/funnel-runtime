@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import cors from 'cors';
 import express, { type Express, type NextFunction, type Request, type Response } from 'express';
-import { ADMIN_TOKEN, FUNNEL_ID, WEB_DIST } from '../env.js';
+import { ADMIN_TOKEN, DEMO_MODE, FUNNEL_ID, WEB_DIST } from '../env.js';
 import type { Db } from '../db/index.js';
 import { DomainError } from '../domain/versions.js';
 import { registerFunnelRoutes } from './routes/funnel.js';
@@ -24,7 +24,7 @@ export function createApp(db: Db, opts: { serveStatic?: boolean; funnelId?: stri
   app.use(express.json({ limit: '1mb' }));
 
   app.get('/api/health', (_req, res) => {
-    res.json({ ok: true, funnel_id: ctx.funnelId, now: new Date().toISOString() });
+    res.json({ ok: true, funnel_id: ctx.funnelId, demo_mode: DEMO_MODE, now: new Date().toISOString() });
   });
 
   registerFunnelRoutes(app, ctx);

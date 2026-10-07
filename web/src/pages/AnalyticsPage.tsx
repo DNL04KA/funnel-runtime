@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../lib/api.js';
 import type { AnalyticsResponseShape, SegmentShape, StepMetricShape, TotalsShape } from '../lib/adminTypes.js';
 import { fmtDateTime, fmtDeltaPp, fmtDuration, fmtInt, fmtPercent } from '../lib/format.js';
+import { DemoNotice } from '../components/DemoNotice.js';
 
 interface Filters {
   version: string;
@@ -49,6 +50,7 @@ export function AnalyticsPage(): JSX.Element {
       </nav>
 
       <div className="admin__body">
+        <DemoNotice show={Boolean(data?.demo_mode)} />
         {error && <div className="notice notice--error">{error}</div>}
 
         {data && (

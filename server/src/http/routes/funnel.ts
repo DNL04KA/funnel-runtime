@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import { z } from 'zod';
 import { getStep, resolveOutcome, type AnswerValue, type ResultStep } from '@funnel/shared';
+import { DEMO_MODE } from '../../env.js';
 import { handler, type AppContext } from '../app.js';
 import { getActiveVersion, resolveConfigFor, DomainError } from '../../domain/versions.js';
 import {
@@ -50,6 +51,7 @@ export function registerFunnelRoutes(app: Express, ctx: AppContext): void {
         step_count: active.config.steps.length,
         experiment: active.config.experiment,
         theme: active.config.theme ?? null,
+        demo_mode: DEMO_MODE,
       });
     }),
   );

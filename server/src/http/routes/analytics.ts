@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import { z } from 'zod';
 import type { VariantId } from '@funnel/shared';
+import { DEMO_MODE } from '../../env.js';
 import { handler, type AppContext } from '../app.js';
 import { getAnalytics } from '../../domain/analytics.js';
 
@@ -21,8 +22,8 @@ export function registerAnalyticsRoutes(app: Express, ctx: AppContext): void {
         Object.entries(req.query).filter(([, v]) => v !== '' && v !== 'all' && v !== undefined),
       );
       const q = querySchema.parse(cleaned);
-      res.json(
-        getAnalytics(ctx.db, {
+      res.json({
+        ...getAnalytics(ctx.db, {
           funnelId: ctx.funnelId,
           version: q.version ?? null,
           variant: (q.variant as VariantId | undefined) ?? null,
@@ -30,7 +31,8 @@ export function registerAnalyticsRoutes(app: Express, ctx: AppContext): void {
           from: q.from ?? null,
           to: q.to ?? null,
         }),
-      );
+        demo_mode: DEMO_MODE,
+      });
     }),
   );
 }

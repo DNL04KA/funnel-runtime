@@ -1,0 +1,41 @@
+# Бесплатный инстанс Render засыпает после 15 минут простоя, и холодный старт
+# занимает около минуты. Пинг раз в пять минут держит стенд готовым к тому,
+# что ссылку откроют в любой момент.
+#
+# Включение: Settings → Secrets and variables → Actions → Variables →
+# New repository variable, имя DEMO_URL, значение вида
+# https://funnel-runtime.onrender.com (без завершающего слэша).
+# Без этой переменной workflow просто ничего не делает.
+name: keepalive
+
+on:
+  schedule:
+    # Пять минут — минимальный интервал в GitHub Actions. Запуски по
+    # расписанию могут задерживаться, поэтому берём запас к 15-минутному сну.
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Разбудить стенд
+        env:
+          DEMO_URL: ${{ vars.DEMO_URL }}
+        run: |
+          if [ -z "${DEMO_URL}" ]; then
+            echo "Переменная DEMO_URL не задана — пропускаю."
+            exit 0
+          fi
+          # Холодный старт может занять до минуты, поэтому таймаут щедрый.
+          code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 150 "${DEMO_URL}/api/health" || echo 000)
+          echo "GET ${DEMO_URL}/api/health → ${code}"
+          [ "${code}" = "200" ]

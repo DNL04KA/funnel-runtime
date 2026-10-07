@@ -4,6 +4,7 @@ import type { AdminOverview, VersionDetail } from '../lib/adminTypes.js';
 import { fmtDateTime, fmtInt } from '../lib/format.js';
 import { IssueList } from '../components/IssueList.js';
 import { AdminTokenField } from '../components/AdminTokenField.js';
+import { DemoNotice } from '../components/DemoNotice.js';
 
 type Busy = null | { kind: 'publish' | 'activate'; key: string };
 
@@ -78,6 +79,7 @@ export function AdminPage(): JSX.Element {
 
   return (
     <AdminShell>
+      <DemoNotice show={Boolean(data.demo_mode)} />
       {flash && <div className="notice notice--ok">{flash}</div>}
       {error && <div className="notice notice--error">{error}</div>}
 
