@@ -8,6 +8,9 @@
   --ink-3: #828b9c;
   --line: #e4e7ef;
   --line-2: #eef0f6;
+  /* Границы интерактивных контролов. Отдельно от --line: тот рассчитан на
+     разделители, и для невыбранного радио/чекбокса его контраста не хватает. */
+  --line-strong: #b4bccd;
   --ok: #0f9d58;
   --ok-bg: #e9f7ef;
   --warn: #c2410c;
@@ -31,6 +34,7 @@
     --ink-3: #7b8496;
     --line: #272b34;
     --line-2: #21242c;
+    --line-strong: #525b6b;
     --ok: #4ade80;
     --ok-bg: #11291c;
     --warn: #fb923c;
@@ -157,7 +161,7 @@ a { color: var(--accent); }
   width: 19px;
   height: 19px;
   margin-top: 1px;
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--line-strong);
   background: var(--surface);
   position: relative;
   transition: border-color 140ms, background 140ms;
@@ -196,7 +200,7 @@ a { color: var(--accent); }
   font: inherit;
   color: inherit;
   background: var(--surface);
-  border: 1.5px solid var(--line);
+  border: 1.5px solid var(--line-strong);
   border-radius: var(--radius-sm);
   min-width: 0;
 }
