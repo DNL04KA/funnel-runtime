@@ -9,4 +9,5 @@ data/*.db-shm
 .vercel
 *.tsbuildinfo
 dist-types/
-demo/
+demo/node_modules/
+demo/reel-video/

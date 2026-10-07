@@ -1,0 +1,14 @@
+{
+  "name": "@funnel/demo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Сценарий записи демо-ролика. Отдельный пакет: Playwright нужен только для записи и не тянется в основную сборку.",
+  "scripts": {
+    "record": "node reel.mjs",
+    "encode": "bash encode.sh"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}
