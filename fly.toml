@@ -1,0 +1,33 @@
+# Fly.io: `fly launch --no-deploy`, then `fly volumes create funnel_data --size 1`
+# and `fly deploy`. One machine, one volume — SQLite needs a single writer.
+app = "funnel-runtime"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8787"
+  DB_PATH = "/data/funnel.db"
+
+[[mounts]]
+  source = "funnel_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "4s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

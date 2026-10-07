@@ -1,0 +1,21 @@
+# Render blueprint: one web service with a persistent disk for SQLite.
+#   render.com → New → Blueprint → point at this repository.
+services:
+  - type: web
+    name: funnel-runtime
+    runtime: docker
+    plan: starter          # a disk requires a paid instance type
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: "8787"
+      - key: DB_PATH
+        value: /data/funnel.db
+      # Set a value here to require `x-admin-token` on /api/admin/*.
+      - key: ADMIN_TOKEN
+        sync: false
+    disk:
+      name: funnel-data
+      mountPath: /data
+      sizeGB: 1

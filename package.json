@@ -1,0 +1,40 @@
+{
+  "name": "funnel-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm:dev:server\" \"npm:dev:web\"",
+    "dev:server": "npm -w server run dev",
+    "dev:web": "npm -w web run dev",
+    "build": "npm -w server run build && npm -w web run build",
+    "start": "npm -w server run start",
+    "seed:versions": "tsx server/src/cli/seed-versions.ts",
+    "seed:traffic": "tsx server/src/cli/generate-traffic.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --force",
+    "reset:db": "rm -f data/funnel.db data/funnel.db-wal data/funnel.db-shm"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "allowScripts": {
+    "better-sqlite3@11.10.0": true,
+    "esbuild@0.21.5": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.24.2": true,
+    "esbuild@0.25.12": true
+  }
+}

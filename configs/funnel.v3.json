@@ -1,0 +1,554 @@
+{
+  "funnelId": "sorter-wms-fit",
+  "name": "Sorter WMS — подбор решения (v3, вторая итерация)",
+  "schemaVersion": 3,
+  "start": "intro",
+  "theme": {
+    "accent": "#0d9488",
+    "accentSoft": "#ecfdf5"
+  },
+  "emits": [
+    "hint_expanded"
+  ],
+  "experiment": {
+    "key": "exp_short_path_v3",
+    "variants": [
+      "A",
+      "B"
+    ],
+    "split": {
+      "A": 0.5,
+      "B": 0.5
+    },
+    "hypothesis": "Вариант A задаёт полный набор вопросов, вариант B убирает вопрос о количестве складов и спрашивает приоритеты сразу после роли — путь короче на один экран. Гипотеза: на верхней части воронки количество складов не влияет на подбор тарифа, поэтому его можно убрать и выиграть на конверсии в результат, не ухудшив релевантность. Контрольная метрика — CTR основного CTA: если она просядет, короткий путь приводит хуже квалифицированный трафик.",
+    "primaryMetric": "result_rate"
+  },
+  "steps": [
+    {
+      "id": "intro",
+      "type": "info",
+      "title": "Подберём конфигурацию Sorter WMS",
+      "subtitle": "Несколько вопросов, примерно две минуты",
+      "body": [
+        "Sorter WMS — вымышленная система управления складом из тестового задания.",
+        "По ответам соберём профиль склада, подберём тариф и оценим бюджет внедрения."
+      ],
+      "hint": "Ответы нигде не публикуются: сырые значения остаются в технической записи сессии, в аналитику уходят только обезличенные категории.",
+      "ctaLabel": "Начать подбор",
+      "next": "role"
+    },
+    {
+      "id": "role",
+      "type": "single_select",
+      "title": "Какая у вас роль в проекте?",
+      "subtitle": "От этого зависит, о чём спросим дальше",
+      "field": "role",
+      "required": true,
+      "options": [
+        {
+          "value": "owner",
+          "label": "Собственник или директор",
+          "hint": "Смотрю на экономику и сроки",
+          "trafficWeight": 3
+        },
+        {
+          "value": "ops",
+          "label": "Руководитель склада или логистики",
+          "hint": "Отвечаю за операции",
+          "trafficWeight": 4
+        },
+        {
+          "value": "it",
+          "label": "ИТ-директор или архитектор",
+          "hint": "Отвечаю за интеграции и данные",
+          "trafficWeight": 3
+        }
+      ],
+      "next": [
+        {
+          "if": {
+            "field": "role",
+            "op": "eq",
+            "value": "it"
+          },
+          "goto": "integrations",
+          "label": "ИТ-роль → ветка интеграций"
+        },
+        {
+          "goto": "warehouses",
+          "label": "Бизнес-роль → ветка операций"
+        }
+      ]
+    },
+    {
+      "id": "warehouses",
+      "type": "number",
+      "title": "Сколько складов нужно подключить?",
+      "subtitle": "Считайте все площадки, включая кросс-докинг",
+      "field": "warehouses",
+      "min": 1,
+      "max": 120,
+      "stepSize": 1,
+      "unit": "скл.",
+      "placeholder": "например, 3",
+      "required": true,
+      "buckets": [
+        1,
+        2,
+        4,
+        11,
+        26
+      ],
+      "next": "volume"
+    },
+    {
+      "id": "integrations",
+      "type": "multi_select",
+      "title": "Какие системы нужно интегрировать?",
+      "subtitle": "Выберите от одной до четырёх",
+      "field": "integrations",
+      "minSelected": 1,
+      "maxSelected": 4,
+      "hint": "Legacy-система означает собственную разработку без публичного API — для неё мы закладываем отдельный этап обследования.",
+      "options": [
+        {
+          "value": "erp",
+          "label": "ERP / учётная система",
+          "trafficWeight": 5
+        },
+        {
+          "value": "marketplaces",
+          "label": "Маркетплейсы",
+          "trafficWeight": 4
+        },
+        {
+          "value": "crm",
+          "label": "CRM",
+          "trafficWeight": 2
+        },
+        {
+          "value": "tms",
+          "label": "TMS / транспорт",
+          "trafficWeight": 3
+        },
+        {
+          "value": "legacy",
+          "label": "Собственная legacy-система",
+          "trafficWeight": 3
+        },
+        {
+          "value": "none",
+          "label": "Пока ничего, нужен автономный контур",
+          "trafficWeight": 1
+        }
+      ],
+      "next": "volume"
+    },
+    {
+      "id": "volume",
+      "type": "single_select",
+      "title": "Сколько заказов обрабатываете в сутки?",
+      "field": "volume",
+      "required": true,
+      "options": [
+        {
+          "value": "upto_500",
+          "label": "До 500",
+          "trafficWeight": 4
+        },
+        {
+          "value": "500_5k",
+          "label": "От 500 до 5 000",
+          "trafficWeight": 5
+        },
+        {
+          "value": "5k_50k",
+          "label": "От 5 000 до 50 000",
+          "trafficWeight": 3
+        },
+        {
+          "value": "enterprise",
+          "label": "Более 50 000",
+          "trafficWeight": 1
+        }
+      ],
+      "next": [
+        {
+          "if": {
+            "field": "volume",
+            "op": "in",
+            "value": [
+              "5k_50k",
+              "enterprise"
+            ]
+          },
+          "goto": "budget",
+          "label": "Крупный поток → спрашиваем бюджет"
+        },
+        {
+          "goto": "features",
+          "label": "Средний поток → сразу к приоритетам"
+        }
+      ]
+    },
+    {
+      "id": "budget",
+      "type": "number",
+      "title": "На какой бюджет внедрения рассчитываете?",
+      "subtitle": "Разовые затраты на первый склад, без лицензий",
+      "field": "budget",
+      "min": 300000,
+      "max": 60000000,
+      "stepSize": 100000,
+      "unit": "₽",
+      "placeholder": "например, 4 500 000",
+      "required": true,
+      "buckets": [
+        300000,
+        1500000,
+        5000000,
+        15000000
+      ],
+      "next": "features"
+    },
+    {
+      "id": "features",
+      "type": "multi_select",
+      "title": "Что важнее всего закрыть в первую очередь?",
+      "subtitle": "Выберите от двух до четырёх пунктов",
+      "field": "features",
+      "minSelected": 2,
+      "maxSelected": 4,
+      "options": [
+        {
+          "value": "picking",
+          "label": "Оптимизация сборки заказов",
+          "trafficWeight": 5
+        },
+        {
+          "value": "inventory",
+          "label": "Инвентаризация и остатки",
+          "trafficWeight": 4
+        },
+        {
+          "value": "labor",
+          "label": "Планирование смен и KPI персонала",
+          "trafficWeight": 3
+        },
+        {
+          "value": "returns",
+          "label": "Обработка возвратов",
+          "trafficWeight": 3
+        },
+        {
+          "value": "analytics",
+          "label": "Аналитика и отчётность",
+          "trafficWeight": 4
+        },
+        {
+          "value": "wms_mobile",
+          "label": "Мобильные терминалы сборщиков",
+          "trafficWeight": 3
+        }
+      ],
+      "next": [
+        {
+          "if": {
+            "any": [
+              {
+                "field": "volume",
+                "op": "eq",
+                "value": "enterprise"
+              },
+              {
+                "field": "integrations",
+                "op": "includes",
+                "value": [
+                  "legacy"
+                ]
+              }
+            ]
+          },
+          "goto": "sla",
+          "label": "НОВАЯ ВЕТКА: enterprise-поток или legacy-интеграция → экран регламента"
+        },
+        {
+          "goto": "result",
+          "label": "Обычный профиль → сразу результат"
+        }
+      ]
+    },
+    {
+      "id": "sla",
+      "type": "info",
+      "title": "Для такого профиля нужен отдельный регламент запуска",
+      "subtitle": "Новый экран второй итерации",
+      "body": [
+        "Либо поток заказов выходит за пределы стандартной поставки, либо в контуре есть собственная legacy-система.",
+        "В обоих случаях перед внедрением мы проводим обследование: две недели на описание интеграционного контура и согласование SLA.",
+        "Это не увеличивает стоимость лицензий — только срок первого этапа."
+      ],
+      "hint": "Обследование можно вынести в отдельный договор и завершить до основного внедрения — так проект стартует с уже согласованным регламентом.",
+      "ctaLabel": "Понятно, к результату",
+      "next": "result"
+    },
+    {
+      "id": "result",
+      "type": "result",
+      "title": "Готово — вот что мы подобрали",
+      "ctaLabel": "Получить расчёт стоимости",
+      "ctaHref": "#/cta/quote",
+      "secondaryCtaLabel": "Скачать описание тарифа",
+      "outcomes": [
+        {
+          "id": "enterprise_funded",
+          "if": {
+            "all": [
+              {
+                "field": "volume",
+                "op": "in",
+                "value": [
+                  "5k_50k",
+                  "enterprise"
+                ]
+              },
+              {
+                "field": "budget",
+                "op": "gte",
+                "value": 5000000
+              }
+            ]
+          },
+          "headline": "Sorter WMS Enterprise",
+          "body": [
+            "Поток заказов и бюджет сходятся с выделенным контуром и SLA 99,95%.",
+            "Внедрение ведёт отдельная команда, первый склад запускаем за 10–14 недель."
+          ],
+          "highlights": [
+            {
+              "label": "Тариф",
+              "value": "Enterprise"
+            },
+            {
+              "label": "Срок внедрения",
+              "value": "10–14 недель"
+            },
+            {
+              "label": "Модель поставки",
+              "value": "Выделенный контур"
+            }
+          ]
+        },
+        {
+          "id": "enterprise_phased",
+          "if": {
+            "field": "volume",
+            "op": "in",
+            "value": [
+              "5k_50k",
+              "enterprise"
+            ]
+          },
+          "headline": "Sorter WMS Enterprise, поэтапный запуск",
+          "body": [
+            "Объём требует Enterprise, но заявленный бюджет меньше типового для такой установки.",
+            "Предлагаем поэтапный запуск: один склад в первом контуре, остальные — после подтверждения эффекта."
+          ],
+          "highlights": [
+            {
+              "label": "Тариф",
+              "value": "Enterprise (этап 1)"
+            },
+            {
+              "label": "Срок первого этапа",
+              "value": "8–10 недель"
+            },
+            {
+              "label": "Модель поставки",
+              "value": "Облако с переходом в выделенный контур"
+            }
+          ]
+        },
+        {
+          "id": "legacy_survey",
+          "if": {
+            "field": "integrations",
+            "op": "includes",
+            "value": [
+              "legacy"
+            ]
+          },
+          "headline": "Sorter WMS Integration + обследование",
+          "body": [
+            "Legacy-контур требует отдельного этапа обследования перед подключением коннекторов.",
+            "После обследования внедрение идёт по стандартному графику Integration."
+          ],
+          "highlights": [
+            {
+              "label": "Тариф",
+              "value": "Integration"
+            },
+            {
+              "label": "Обследование",
+              "value": "2 недели"
+            },
+            {
+              "label": "Срок внедрения",
+              "value": "8–10 недель"
+            }
+          ]
+        },
+        {
+          "id": "it_focused",
+          "if": {
+            "field": "role",
+            "op": "eq",
+            "value": "it"
+          },
+          "headline": "Sorter WMS Integration",
+          "body": [
+            "Под ваш набор интеграций подойдёт сборка с открытым API и брокером событий.",
+            "Коннекторы к типовым системам входят в тариф, кастомные пишем в рамках внедрения."
+          ],
+          "highlights": [
+            {
+              "label": "Тариф",
+              "value": "Integration"
+            },
+            {
+              "label": "Срок внедрения",
+              "value": "6–8 недель"
+            },
+            {
+              "label": "Интеграции",
+              "value": "Открытый API + брокер событий"
+            }
+          ]
+        },
+        {
+          "id": "standard",
+          "headline": "Sorter WMS Standard",
+          "body": [
+            "Для вашего профиля достаточно стандартной облачной поставки.",
+            "Типовой запуск занимает 4–6 недель и не требует изменений в ИТ-инфраструктуре."
+          ],
+          "highlights": [
+            {
+              "label": "Тариф",
+              "value": "Standard"
+            },
+            {
+              "label": "Срок внедрения",
+              "value": "4–6 недель"
+            },
+            {
+              "label": "Модель поставки",
+              "value": "Облако"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variants": {
+    "B": {
+      "removeSteps": [
+        "warehouses"
+      ],
+      "stepOrder": [
+        "intro",
+        "role",
+        "integrations",
+        "features",
+        "volume",
+        "budget",
+        "sla",
+        "result"
+      ],
+      "overrides": {
+        "warehouses": {
+          "next": "features"
+        },
+        "integrations": {
+          "next": "features"
+        },
+        "features": {
+          "subtitle": "Выберите от двух до четырёх пунктов — дальше уточним масштаб",
+          "next": "volume"
+        },
+        "budget": {
+          "next": [
+            {
+              "if": {
+                "any": [
+                  {
+                    "field": "volume",
+                    "op": "eq",
+                    "value": "enterprise"
+                  },
+                  {
+                    "field": "integrations",
+                    "op": "includes",
+                    "value": [
+                      "legacy"
+                    ]
+                  }
+                ]
+              },
+              "goto": "sla",
+              "label": "НОВАЯ ВЕТКА: enterprise или legacy → экран регламента"
+            },
+            {
+              "goto": "result"
+            }
+          ]
+        },
+        "result": {
+          "title": "Готово — предлагаем следующий шаг",
+          "ctaLabel": "Записаться на демо",
+          "secondaryCtaLabel": "Прислать описание на почту"
+        },
+        "volume": {
+          "next": [
+            {
+              "if": {
+                "field": "volume",
+                "op": "in",
+                "value": [
+                  "5k_50k",
+                  "enterprise"
+                ]
+              },
+              "goto": "budget",
+              "label": "Крупный поток → спрашиваем бюджет"
+            },
+            {
+              "if": {
+                "any": [
+                  {
+                    "field": "volume",
+                    "op": "eq",
+                    "value": "enterprise"
+                  },
+                  {
+                    "field": "integrations",
+                    "op": "includes",
+                    "value": [
+                      "legacy"
+                    ]
+                  }
+                ]
+              },
+              "goto": "sla",
+              "label": "НОВАЯ ВЕТКА: legacy-интеграция → экран регламента"
+            },
+            {
+              "goto": "result",
+              "label": "Обычный профиль → сразу результат"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

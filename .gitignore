@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/*.db
+data/*.db-wal
+data/*.db-shm
+.DS_Store
+*.log
+.env
+.vercel
+*.tsbuildinfo

@@ -1,0 +1,28 @@
+{
+  "name": "@funnel/server",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "node build.mjs",
+    "start": "node dist/main.js",
+    "seed:versions": "tsx src/cli/seed-versions.ts",
+    "seed:traffic": "tsx src/cli/generate-traffic.ts"
+  },
+  "dependencies": {
+    "@funnel/shared": "*",
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.19.2"
+  }
+}
