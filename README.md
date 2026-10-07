@@ -486,14 +486,45 @@ docker build -t funnel-runtime .
 docker run -p 8787:8787 -v funnel-data:/data funnel-runtime
 ```
 
-В репозитории лежат готовые манифесты:
-
-- `render.yaml` — Render Blueprint, web service + диск 1 ГБ на `/data`;
-- `fly.toml` — Fly.io, одна машина + том (SQLite требует одного писателя).
-
 При первом старте сервер сам публикует `funnel.v1.json` и `funnel.v2.json`, если
 база пустая, — задеплоенный URL работает сразу, без ручных шагов. Чтобы закрыть
 админку, задайте `ADMIN_TOKEN`; токен вводится на самой странице управления.
+
+### Render (манифест `render.yaml`)
+
+1. На [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint**.
+2. Подключить GitHub-аккаунт и выбрать репозиторий. Render прочитает
+   `render.yaml` сам: web service из `Dockerfile`, диск 1 ГБ на `/data`,
+   health check на `/api/health`.
+3. При желании задать `ADMIN_TOKEN` (в манифесте он помечен `sync: false`,
+   поэтому Render спросит значение при создании).
+4. **Apply**. Первая сборка идёт несколько минут: ставятся зависимости и
+   компилируется нативный модуль `better-sqlite3`.
+5. После деплоя проверить `/api/health`, затем открыть `/` и `/#/admin/analytics`.
+
+> **Постоянный диск на Render доступен только на платных инстансах** (в манифесте
+> стоит `plan: starter`). На бесплатном инстансе диск подключить нельзя, и база
+> будет теряться при каждом перезапуске — то есть ровно та проблема, из-за
+> которой не подходит serverless.
+
+Чтобы наполнить задеплоенный стенд трафиком, генератор можно направить на него:
+
+```bash
+npm run seed:traffic -- --url https://<ваш-домен> --sessions 150
+# если задан ADMIN_TOKEN — передать его в окружении:
+ADMIN_TOKEN=... npm run seed:traffic -- --url https://<ваш-домен>
+```
+
+### Fly.io (манифест `fly.toml`)
+
+```bash
+fly launch --no-deploy          # подхватит fly.toml
+fly volumes create funnel_data --size 1
+fly deploy
+```
+
+Одна машина и один том: SQLite требует единственного писателя, поэтому
+`min_machines_running = 1` и масштабирование репликами не предполагается.
 
 ---
 
