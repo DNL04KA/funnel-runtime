@@ -16,6 +16,19 @@ tests/    vitest: закрепление версии, A/B, дедупликац
 demo/     сценарий записи демо-ролика (Playwright) и сам ролик
 ```
 
+## Живой стенд
+
+**https://funnel-runtime-wzc8.onrender.com**
+
+| Страница | Что там |
+| --- | --- |
+| [/](https://funnel-runtime-wzc8.onrender.com/) | сама воронка; `?variant=B` переключает вариант, `?reset=1` начинает заново |
+| [/#/admin](https://funnel-runtime-wzc8.onrender.com/#/admin) | версии: публикация, откат, журнал. Конфиг второй итерации готов к публикации |
+| [/#/admin/analytics](https://funnel-runtime-wzc8.onrender.com/#/admin/analytics) | дашборд по засеянному трафику |
+
+Стенд развёрнут на бесплатном инстансе без постоянного диска — подробности и
+ограничения в разделе «Деплой».
+
 ## Демо
 
 **[demo/funnel-runtime-reel.mp4](demo/funnel-runtime-reel.mp4)** — 2:17, обзор
