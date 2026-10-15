@@ -44,6 +44,16 @@ export const DEMO_SEED_SESSIONS = Number(process.env.DEMO_SEED_SESSIONS ?? 0);
 /** Стенд работает на эфемерном диске и пересоздаёт данные при рестарте. */
 export const DEMO_MODE = DEMO_SEED_SESSIONS > 0;
 
+/**
+ * Публичный адрес для самопинга против засыпания бесплатного инстанса.
+ * На Render переменная RENDER_EXTERNAL_URL подставляется платформой, так что
+ * настраивать вручную ничего не нужно. Пустое значение выключает самопинг.
+ */
+export const KEEPALIVE_URL = process.env.KEEPALIVE_URL ?? process.env.RENDER_EXTERNAL_URL ?? '';
+
+/** Интервал самопинга. Должен быть заметно меньше 15 минут простоя у Render. */
+export const KEEPALIVE_INTERVAL_MS = Number(process.env.KEEPALIVE_INTERVAL_MS ?? 10 * 60 * 1000);
+
 export function ensureDataDir(dbPath = DB_PATH): void {
   if (dbPath === ':memory:') return;
   mkdirSync(dirname(dbPath), { recursive: true });
